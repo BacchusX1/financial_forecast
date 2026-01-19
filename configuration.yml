@@ -1,0 +1,1220 @@
+# ============================================================================
+# TRADING FORECAST v2 - CONFIGURATION FILE
+# ============================================================================
+# This file contains all available options for data loading and feature engineering.
+# Uncomment and modify values as needed. Settings are linked to source code.
+#
+# Usage: python launcher.py (then select "Use configuration.yml")
+# ============================================================================
+
+
+# ============================================================================
+# LOGGING & DEBUG
+# ============================================================================
+
+logging:
+  # Log Level: Verbosity of console output
+  # Options: "DEBUG" | "INFO" | "WARNING" | "ERROR"
+  level: "DEBUG"
+  
+  # Note: Training logs are automatically saved to out/models_*/log.txt
+  # with colored output for warnings (yellow) and errors (red).
+  # Use 'cat' or 'less -R' to view with colors.
+
+
+# ============================================================================
+# DATA LOADER CONFIGURATION
+# ============================================================================
+
+data_loader:
+  # Keys: List of stock tickers or crypto symbols to download
+  # Options: Any valid ticker (AAPL, GOOGL:NASDAQ for stock or BTC, ETH for crypto)
+  # Example: ["AAPL", "GOOGL:NASDAQ", "TSLA", "BTC", "ETH"]
+  keys: ["BTC"]
+  
+  # Category: Type of asset - choose between "stock" or "crypto"
+  # Options: "stock" | "crypto"
+  category: "crypto"
+  
+  # Data Source: Where to fetch data from
+  # Options: "yfinance" (default) | "binance" (crypto only, years of historical data)
+  # NOTE: For crypto with intraday data (5m, 15m, 1h), use "binance" to get longer history!
+  # yfinance limits: 5m data = 60 days max, 1h = 730 days max
+  # binance limits: 5m data = years of history, no API key needed
+  data_source: "binance"
+  
+  # Candle Length (Interval): Timeframe for candlesticks
+  # Options: 1m, 2m, 5m, 15m, 30m, 60m, 90m, 1h, 1d, 5d, 1wk, 1mo, 3mo
+  # Aliases: 5min, 1min, 1hour, 1day, 1week, 1month
+  # API Limits: 1m(7d), 5m-90m(60d), 1h(730d), 1d+(unlimited)
+  candle_length: "5m"
+  
+  # Period: Number of years of historical data to download
+  # Options: Integer/Float (1-100+) or null for auto-max
+  # Alternative: Use start_date and end_date instead
+  # Note: If period exceeds API limit for the interval, it will be auto-adjusted
+  # Example: period: null with candle_length: "5m" → 60 days (API max for 5m)
+  period: 1
+  
+  # Start Date: (Optional) Custom start date instead of period
+  # Options: "YYYY-MM-DD" format or null for automatic calculation
+  # Example: "2020-01-01"
+  start_date: null
+  
+  # End Date: (Optional) Custom end date
+  # Options: "YYYY-MM-DD" format or null for today's date
+  # Example: "2024-12-31"
+  end_date: null
+  
+  # Extended Download: Bypass API limits by making multiple chunked requests
+  # Options: true | false
+  # When enabled, downloads data in chunks and concatenates to get longer history
+  # Example: Get 1.5 years of 5m data (normally limited to 60 days)
+  # Chunks are automatically sized based on the interval's API limit
+  extended_download: true
+  
+  # Chunk Overlap Days: Overlap between download chunks for deduplication
+  # Options: Integer (1-7)
+  # Only used when extended_download is true
+  chunk_overlap_days: 1
+  
+  # Request Delay Seconds: Delay between API requests in extended mode
+  # Options: Float (0.5-10.0)
+  # Only used when extended_download is true
+  request_delay_seconds: 2.0
+
+
+# ============================================================================
+# FEATURE ENGINEERING CONFIGURATION
+# ============================================================================
+
+feature_engineering:
+  # Scaler: Type of scaling to apply to ALL numeric features (including lag/rolling)
+  # Options: "standard" (StandardScaler) | "minmax" (MinMaxScaler) | "robust" (RobustScaler) | null (no scaling)
+  # WARNING: Set to null when using Data Science module! DataScientist applies scaling
+  # correctly AFTER train/test split to prevent data leakage. Scaling here would
+  # use test data statistics, causing leakage.
+  # Only use scaling here for pure feature engineering without ML models.
+  scaler: null
+  
+  # Target Columns: Specific columns to engineer features from
+  # Options: List of column names or null (auto-detect all numeric columns)
+  # Available columns depend on candle_length: Open, High, Low, Close, Volume, etc.
+  # Example: ["Close", "Volume", "High"]
+  target_columns: ["Close"]
+
+  # Scale-Free Mode: Forbid features that depend on absolute price (e.g., raw SMA, ATR)
+  # Options: true (allow absolute/price-scale features) | false (enforce relative-only features)
+  # When false, only ratios, percentages, and normalized indicators are generated.
+  # This makes the model robust to price level changes (e.g. BTC $20k vs $80k).
+  allow_absolute_scale_features: false
+  
+  # Lag Features: Create lagged/shifted versions of columns
+  # Options: List of integers representing lag periods (e.g., [1, 5, 10])
+  # Meaning: [1] = previous candle, [12] = 1 hour ago (5min×12), [48] = 4 hours ago
+  # Example: [1, 5, 10, 20]
+  lag_features: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 24, 48]
+  
+  # Rolling Windows: Create rolling window aggregations
+  # Options: List of integers representing window sizes
+  # Meaning: [12] = 1-hour window, [48] = 4-hour, [288] = 1-day
+  # Example: [5, 10, 20, 50]
+  rolling_windows: [6, 12, 24, 48, 96]
+  
+  # Rolling Functions: Aggregation functions for rolling windows
+  # Options: List containing any of: "mean", "std", "min", "max"
+  # Used with rolling_windows to create features like Close_rolling_5_mean
+  # Example: ["mean", "std", "min", "max"]
+  rolling_functions: ["mean"]
+  
+  # PCA Components: Apply PCA dimensionality reduction
+  # Options: Integer (number of components) or null (no PCA)
+  # FAST TEST: smaller number of components
+  pca_components: null
+  
+  # Autoencoder Latent Dimension: Apply autoencoder for non-linear feature extraction
+  # Options: Integer (latent space dimension) or null (no autoencoder)
+  # FAST TEST: disabled to save time
+  autoencoder_latent_dim: null
+  
+  # Autoencoder Epochs: Number of training epochs for autoencoder
+  # Options: Integer (100-500 typical)
+  # Only used if autoencoder_latent_dim is set
+  autoencoder_epochs: 50
+  
+  # Group by Ticker: Apply transformations separately per ticker
+  # Options: true | false
+  # Recommended: true (prevents data leakage between assets)
+  group_by_ticker: true
+  
+  # Exclude from Scaling: Column names to exclude from scaling
+  # Options: List of column names or empty list
+  # Useful to keep certain features at original scale (e.g., Volume, Ticker indicators)
+  # For regression models, it's recommended to exclude 'Close' to keep prices in original range
+  # Example: ["Volume", "Ticker", "Close"]
+  exclude_from_scaling: []
+  
+  # ============================================================================
+  # ADVANCED INDICATOR FRAMEWORK (70+ Technical Indicators)
+  # ============================================================================
+  # This section enables the modular indicator engine with automatic leakage prevention.
+  # All indicators are automatically shifted by 1 period (.shift(1)) to ensure
+  # features at time t only contain information up to time t-1.
+  
+  # Indicator Set: Name of the indicator configuration
+  # Options: "expanded_v1" (70+ indicators) | "minimal" | "custom"
+  indicator_set: "minimal"
+  
+  # Indicators Configuration
+  indicators:
+    # Enabled Groups: Which indicator categories to compute
+    # Options: List containing any of:
+    #   - "returns": Price transformations, log/pct returns, volatility, z-scores
+    #   - "trend": Moving averages (SMA, EMA, WMA, VWMA, HMA, DEMA, TEMA, KAMA, ALMA, T3)
+    #   - "volatility": ATR, Bollinger Bands, Keltner, Donchian, historical/Parkinson/GK volatility
+    #   - "momentum": RSI, Stochastic, MACD, CCI, Williams%R, ROC, TRIX, Ultimate/Awesome Osc, 
+    #                 DMI/ADX, Aroon, Vortex, KST, TSI, Fisher, Elder Ray
+    #   - "volume": OBV, A/D, CMF, MFI, Force Index, EOM, Volume ROC, PVT, KVO, VWAP
+    #   - "candle": Candle body, wicks, body/range ratios, breakout/breakdown flags
+    #   - "regime": Hurst exponent, autocorrelation, skew/kurtosis, drawdown, entropy
+    # Recommended: all groups for maximum feature set
+    enabled_groups: ["returns", "trend", "volatility", "momentum", "volume", "candle", "regime"]
+    
+    # Parameters: Custom parameters for specific indicators (optional)
+    # Override default parameters here. If not specified, sensible defaults are used.
+    # Note: For 5-min candles, adjust periods: 12=1hr, 48=4hr, 288=1day
+    params:
+      # RSI windows (14 = ~1hr, 48 = 4hr for 5-min candles)
+      rsi: [14, 28, 48]
+      
+      # ATR window (14 periods = 70 minutes)
+      atr: [14, 28]
+      
+      # Bollinger Bands (20 periods = ~1.5hr)
+      bbands: [{length: 20, std: 2}]
+      
+      # MACD (optimized for 5-min: faster signals)
+      macd: [{fast: 12, slow: 26, signal: 9}]
+      
+      # Simple Moving Averages (6=30min, 12=1hr, 48=4hr, 144=12hr, 288=1day)
+      sma: [6, 12, 24, 48, 144]
+      
+      # Exponential Moving Averages
+      ema: [6, 12, 24, 48, 144]
+      
+      # Donchian Channel
+      donchian: [20, 48]
+      
+      # Keltner Channel
+      keltner: [20]
+      
+      # ADX (14 = ~1hr trend strength)
+      adx: [14, 28]
+      
+      # Stochastic
+      stoch: [{k: 14, d: 3}]
+  
+  # Leakage Guard: Automatic prevention of future data leakage
+  leakage_guard:
+    # Enforce Shift 1: Automatically apply .shift(1) to all new indicator columns
+    # Options: true | false
+    # Recommended: true (CRITICAL for preventing data leakage)
+    # When true, all indicators at time t only use data up to time t-1
+    enforce_shift_1: true
+    
+    # Fail on Unshifted Columns: Raise error if potential leakage detected
+    # Options: true | false
+    # Recommended: true for strict validation, false for development/debugging
+    fail_on_unshifted_columns: true
+  
+  # Feature Pruning: Remove redundant or low-quality features
+  feature_pruning:
+    # Drop Constant: Remove features with only one unique value
+    # Options: true | false
+    # Recommended: true (constant features have no predictive power)
+    drop_constant: true
+    
+    # Drop High NaN Ratio: Remove features with too many missing values
+    # Options: Float between 0-1 representing maximum allowed NaN ratio
+    # Example: 0.2 = drop features with >20% NaN values
+    # Recommended: 0.2 (balance between data quality and feature retention)
+    drop_high_nan_ratio: 0.2
+    
+    # Correlation Filter: Remove highly correlated features
+    correlation_filter:
+      # Enabled: Whether to apply correlation filtering
+      # Options: true | false
+      # Recommended: true (reduces redundancy and overfitting)
+      enabled: true
+      
+      # Method: Correlation method to use
+      # Options: "pearson" | "spearman" | "kendall"
+      # Recommended: "spearman" (robust to non-linear relationships)
+      method: "spearman"
+      
+      # Threshold: Correlation threshold above which features are dropped
+      # Options: Float between 0-1
+      # Example: 0.98 = drop one of two features if correlation > 98%
+      # Recommended: 0.95-0.98 (aggressive pruning without losing diversity)
+      threshold: 0.98
+
+
+# ============================================================================
+# DATA SCIENCE (ML MODELS) CONFIGURATION
+# ============================================================================
+
+data_science:
+  # Enable Data Science Module: Run classification and regression models
+  # Options: true | false
+  enabled: true
+  
+  # GPU Acceleration (Default): Default GPU setting for all PyTorch models
+  # Options: true | false
+  # - true: Use GPU if CUDA available, else fall back to CPU
+  # - false: Force CPU only (useful for debugging or memory issues)
+  # Note: Each model can override this with its own use_gpu setting
+  use_gpu: false
+  
+  # Classifier Models: Trend classification (UP/DOWN/SIDEWAYS)
+  # Options: "dnn" | "svc" | "random_forest"
+  # Note: SVR and gradient_boosting removed (underperforming for financial data)
+  # Recommended: ["dnn", "random_forest"] for DNN + tree-based comparison
+  classifier_models: []
+  
+  # Regressor Models: Time series forecasting
+  # Core Models:
+  #   - "lstm": Bidirectional LSTM with attention (PyTorch unified)
+  #   - "xlstm": Extended LSTM with matrix memory (PyTorch, GPU recommended)
+  #   - "dnn": Deep neural network with residual connections (PyTorch unified)
+  #   - "krr": Kernel Ridge Regression (sklearn)
+  #   - "linear": Linear/ElasticNet regression (sklearn)
+  # Model Zoo (requires model_zoo.py, uses GPU when use_gpu: true):
+  #   - "lightgbm": Gradient boosting trees
+  #   - "tcn": Temporal Convolutional Network (PyTorch)
+  #   - "nbeats": N-BEATS time series model (PyTorch)
+  #   - "moe": Mixture of Experts (PyTorch)
+  #   - "multitask": Joint regression + classification (PyTorch)
+  # FAST TEST: subset of models for quick validation
+  regressor_models: [ "xlstm", "tcn", "nbeats", "lightgbm"]
+
+  # ============================================================================
+  # MODEL HYPERPARAMETERS
+  # ============================================================================
+  # Hyperparameters for all models (classifiers and regressors).
+  # Model Zoo models (lightgbm, tcn, nbeats, moe, multitask) are in a separate section below.
+  
+  model_hyperparameters:
+    # -------------------------------------------------------------------------
+    # CLASSIFIERS
+    # -------------------------------------------------------------------------
+    
+    # DNN Classifier: Dense Neural Network for trend classification
+    classifier_dnn:
+      # GPU Acceleration: Override global use_gpu for this model
+      # Options: true | false | null (use global default)
+      use_gpu: null
+      
+      # Dense layer sizes (neurons per layer)
+      # Options: List of integers (e.g., [128, 64, 32])
+      layers: [64, 32]
+      
+      # Dropout rates per layer (length must match layers)
+      # Options: List of floats 0.0-1.0
+      dropout: [0.3, 0.2]
+      
+      # Activation function for hidden layers
+      # Options: "relu" | "leaky_relu" | "elu" | "gelu" | "tanh" | "sigmoid"
+      activation: "relu"
+      
+      # L2 regularization strength
+      # Options: Float (0.0001 - 0.01)
+      l2_reg: 0.001
+      
+      # Learning rate for Adam optimizer
+      # Options: Float (1e-5 to 1e-2)
+      learning_rate: 0.001
+      
+      # Maximum training epochs
+      # Options: Integer (50-500)
+      # FAST TEST: 5 epochs
+      epochs: 5
+      
+      # Batch size for training
+      # Options: Integer (8-128)
+      batch_size: 64
+      
+      # Early stopping patience (epochs without improvement)
+      # Options: Integer (5-50)
+      early_stopping_patience: 3
+    
+    # SVC Classifier: Support Vector Classifier with GridSearchCV
+    classifier_svc:
+      # Whether to use GridSearchCV for hyperparameter tuning
+      # Options: true | false
+      # If false, uses the fixed parameters below directly
+      use_grid_search: true
+      
+      # Grid search options (only used if use_grid_search: true)
+      grid_search:
+        # C values to try (regularization strength)
+        C: [0.1, 1, 10, 100]
+        
+        # Gamma values to try (kernel coefficient)
+        gamma: ["scale", "auto", 0.001, 0.01, 0.1]
+        
+        # Kernel types to try
+        kernel: ["rbf", "linear"]
+        
+        # Cross-validation folds
+        cv_folds: 5
+      
+      # Fixed parameters (used if use_grid_search: false)
+      fixed:
+        C: 1.0
+        gamma: "scale"
+        kernel: "rbf"
+      
+      # Enable probability estimates (for classifier_proba output)
+      # Options: true | false
+      probability: true
+    
+    # Random Forest Classifier with RandomizedSearchCV
+    classifier_random_forest:
+      # Whether to use RandomizedSearchCV for hyperparameter tuning
+      # Options: true | false
+      # FAST TEST: disable search, use fixed params
+      use_random_search: false
+      
+      # Random search options (only used if use_random_search: true)
+      random_search:
+        # Number of trees in forest
+        n_estimators: [50, 100]
+        
+        # Maximum depth of trees (null = unlimited)
+        max_depth: [10, 15]
+        
+        # Minimum samples required to split a node
+        min_samples_split: [5, 10]
+        
+        # Minimum samples required at leaf node
+        min_samples_leaf: [2, 4]
+        
+        # Number of features to consider for best split
+        # Options: "sqrt" | "log2" | null | float
+        max_features: ["sqrt"]
+        
+        # Bootstrap sampling
+        bootstrap: [true]
+        
+        # Number of parameter combinations to try
+        n_iter: 5
+        
+        # Cross-validation folds
+        cv_folds: 2
+      
+      # Fixed parameters (used if use_random_search: false)
+      # FAST TEST: small forest for quick training
+      fixed:
+        n_estimators: 50
+        max_depth: 10
+        min_samples_split: 10
+        min_samples_leaf: 4
+        max_features: "sqrt"
+        bootstrap: true
+    
+    # -------------------------------------------------------------------------
+    # REGRESSORS
+    # -------------------------------------------------------------------------
+    
+    # DNN Regressor: Enhanced Dense Neural Network for multi-step forecasting
+    # Architecture: Residual blocks + SE attention for financial time series
+    regressor_dnn:
+      # GPU Acceleration: Override global use_gpu for this model
+      # Options: true | false | null (use global default)
+      use_gpu: true
+      
+      # Dense layer sizes (3 layers for residual blocks)
+      # Larger networks capture more complex market patterns
+      # Options: List of 3 integers (e.g., [512, 256, 128])
+      layers: [512, 256, 128]
+      
+      # Dropout rates per block (important for financial data to prevent overfitting)
+      # Options: List of floats 0.0-1.0
+      dropout: [0.35, 0.3, 0.25]
+      
+      # Activation function (GELU is smoother, better for regression)
+      # Options: "gelu" | "relu" | "leaky_relu" | "elu" | "swish" | "tanh"
+      activation: "gelu"
+      
+      # L2 regularization strength (prevents overfitting on noisy financial data)
+      # Options: Float (0.0001 - 0.01)
+      l2_reg: 0.0005
+      
+      # Initial learning rate (uses CosineDecay schedule)
+      # Options: Float (1e-4 to 1e-2)
+      learning_rate: 0.0005
+      
+      # Maximum training epochs (financial patterns need more epochs)
+      # Options: Integer (100-500)
+      epochs: 300
+      
+      # Batch size for training (smaller batches = more gradient updates)
+      # Options: Integer (16-128)
+      batch_size: 32
+      
+      # Early stopping patience (allow model to find optimal solution)
+      # Options: Integer (20-100)
+      early_stopping_patience: 50
+      
+      # Use Layer Normalization (stabilizes training)
+      # Options: true | false
+      use_layer_norm: true
+      
+      # Use SE (Squeeze-and-Excitation) attention blocks (feature weighting)
+      # Options: true | false
+      use_se_attention: true
+      
+      # Use residual connections (helps gradient flow in deep networks)
+      # Options: true | false
+      use_residual: true
+    
+    # LSTM Regressor: Bidirectional LSTM with Multi-Head Attention
+    # Designed for sequential financial pattern recognition
+    regressor_lstm:
+      # GPU Acceleration: Override global use_gpu for this model
+      # Options: true | false | null (use global default)
+      use_gpu: true
+      
+      # Number of timesteps to create from features
+      # Options: Integer (4-16)
+      # For 5-min candles: 12 timesteps = 1 hour context
+      timesteps: 8
+      
+      # LSTM units per layer [layer1, layer2, final_aggregation]
+      # Larger LSTM captures longer-term dependencies in price movements
+      # Options: List of 3 integers
+      lstm_units: [256, 128, 64]
+      
+      # Dropout rates for LSTM layers (critical for financial data)
+      # Options: List of floats 0.0-0.5
+      lstm_dropout: [0.3, 0.25, 0.2]
+      
+      # Recurrent dropout rates (regularizes hidden states)
+      # Options: List of floats 0.0-0.3
+      recurrent_dropout: [0.15, 0.1, 0.1]
+      
+      # Multi-head attention configuration (captures different time scales)
+      attention:
+        # Number of attention heads (more heads = more pattern types)
+        num_heads: 8
+        
+        # Key dimension per head
+        key_dim: 32
+        
+        # Attention dropout
+        dropout: 0.15
+      
+      # Dense layer sizes after LSTM (larger for feature transformation)
+      # Options: List of integers
+      dense_layers: [256, 128]
+      
+      # Dense layer dropout rates
+      dense_dropout: [0.3, 0.25]
+      
+      # Initial learning rate (uses CosineDecay schedule)
+      # Lower LR for more stable convergence on financial data
+      # Options: Float (1e-4 to 1e-2)
+      learning_rate: 0.0005
+      
+      # Weight decay for AdamW optimizer (L2 regularization)
+      # Options: Float (0.001 - 0.1)
+      weight_decay: 0.01
+      
+      # Maximum training epochs
+      # Options: Integer (100-300)
+      epochs: 200
+      
+      # Batch size for training
+      # Options: Integer (16-64)
+      batch_size: 32
+      
+      # Early stopping patience
+      # Options: Integer (20-50)
+      early_stopping_patience: 30
+      
+      # Use bidirectional LSTM layers (captures past AND future context)
+      # Options: true | false
+      bidirectional: true
+      
+      # Use Layer Normalization (stabilizes gradients)
+      # Options: true | false
+      use_layer_norm: true
+      
+      # L2 regularization for first LSTM layer
+      # Options: Float (0.0 - 0.001)
+      l2_reg: 0.001
+    
+    # xLSTM Regressor: Extended LSTM with Matrix Memory (mLSTM)
+    # Uses PyTorch, runs on GPU for optimal performance
+    # Paper: "xLSTM: Extended Long Short-Term Memory" (2024)
+    # Advantages: Fully parallelizable, exponential gating, matrix memory
+    # Best for: Complex sequential patterns, long-range dependencies
+    regressor_xlstm:
+      # GPU Acceleration: Override global use_gpu for this model
+      # Options: true | false | null (use global default)
+      use_gpu: true
+      
+      # Number of timesteps for sequence input
+      # Options: Integer (4-16)
+      # For 5-min candles: 8 timesteps = 40 min context
+      timesteps: 8
+      
+      # Number of xLSTM blocks (mLSTM layers)
+      # More blocks = deeper model, captures more complex patterns
+      # Options: Integer (2-6)
+      num_blocks: 4
+      
+      # Number of attention heads in mLSTM
+      # Options: Integer (4-8), must divide hidden_dim evenly
+      num_heads: 4
+      
+      # Hidden dimension (embedding_dim for xLSTM)
+      # MUST be divisible by num_heads
+      # Options: Integer (64, 128, 256)
+      hidden_dim: 128
+      
+      # Dropout rate for regularization
+      # Options: Float (0.0 - 0.5)
+      dropout: 0.2
+      
+      # Training epochs
+      # Options: Integer (100-500)
+      epochs: 300
+      
+      # Batch size for training
+      # Options: Integer (16-64)
+      batch_size: 32
+      
+      # Learning rate for AdamW optimizer
+      # Lower LR for xLSTM as it's more expressive
+      # Options: Float (0.0001 - 0.01)
+      learning_rate: 0.0003
+      
+      # Early stopping patience
+      # Options: Integer (10-50)
+      patience: 40
+    
+    # KRR Regressor: Kernel Ridge Regression with GridSearchCV
+    regressor_krr:
+      # Whether to use GridSearchCV for hyperparameter tuning
+      # Options: true | false
+      # FAST TEST: smaller grid
+      use_grid_search: true
+      
+      # Grid search options (only used if use_grid_search: true)
+      grid_search:
+        # Alpha (regularization strength)
+        alpha: [0.001, 0.01, 0.1, 1.0, 10.0]
+        
+        # Gamma (kernel coefficient, only for RBF/polynomial)
+        gamma: [0.001,0.01, 0.1]
+        
+        # Kernel type
+        kernel: ["rbf"]
+        
+        # Cross-validation folds
+        cv_folds: 2
+      
+      # Fixed parameters (used if use_grid_search: false)
+      fixed:
+        alpha: 1.0
+        gamma: 0.1
+        kernel: "rbf"
+    
+    # Linear Regressor: Simple Linear Regression
+    regressor_linear:
+      # Fit intercept
+      # Options: true | false
+      fit_intercept: true
+      
+      # Whether to use ElasticNet regularization instead of OLS
+      # Options: true | false
+      # ElasticNet combines L1 (Lasso) and L2 (Ridge) regularization
+      use_regularization: false
+      
+      # ElasticNet parameters (only used if use_regularization: true)
+      elasticnet:
+        # Alpha (regularization strength)
+        alpha: 1.0
+        
+        # L1 ratio (0 = Ridge, 1 = Lasso, 0.5 = balanced)
+        l1_ratio: 0.5
+        
+        # Maximum iterations
+        max_iter: 1000
+  
+  # ============================================================================
+  # ADVANCED FEATURE PROCESSING (PCA/Autoencoder/Gating)
+  # ============================================================================
+  
+  feature_processing:
+    # Mode: Feature transformation mode
+    # Options: "raw" | "raw+pca" | "raw+ae" | "raw+pca+ae"
+    # - raw: Use features as-is (StandardScaler only)
+    # - raw+pca: Add PCA-compressed features
+    # - raw+ae: Add Autoencoder latent features
+    # - raw+pca+ae: Combine all (raw + PCA + AE)
+    # Recommended: "raw" for baseline, "raw+pca" for compression
+    mode: "raw"
+    
+    pca:
+      # Enabled: Whether to apply PCA compression
+      enabled: false
+      
+      # Number of Components: Target dimensionality
+      # Options: Integer (5-50 typical) or Float (0.0-1.0 for explained variance)
+      # Examples: 20 = keep 20 components, 0.95 = keep 95% variance
+      n_components: 10
+    
+    autoencoder:
+      # Enabled: Whether to train Denoising Autoencoder
+      # FAST TEST: disabled to save time
+      enabled: false
+      
+      # GPU Acceleration: Override global use_gpu for this model
+      # Options: true | false | null (use global default)
+      use_gpu: null
+      
+      # Latent Dimension: Size of compressed representation
+      # Options: Integer (8-32 typical)
+      latent_dim: 8
+      
+      # Noise Std: Gaussian noise standard deviation for denoising
+      # Options: Float (0.0-0.1)
+      # 0.0 = no noise, 0.01 = 1% noise
+      noise_std: 0.01
+      
+      # Epochs: Training iterations
+      # Options: Integer (30-100 typical)
+      # FAST TEST: 10 epochs
+      epochs: 10
+      
+      # Batch Size: Mini-batch size for training
+      # Options: Integer (128-512 typical)
+      batch_size: 128
+      
+      # Learning Rate: Adam optimizer learning rate
+      # Options: Float (1e-4 to 1e-2)
+      lr: 1e-3
+    
+    gating:
+      # Enabled: Whether to use learnable feature gating
+      enabled: false
+      
+      # L1 Lambda: Regularization strength for sparsity
+      # Options: Float (1e-5 to 1e-3)
+      l1_lambda: 1e-4
+  
+  # ============================================================================
+  # MODEL ZOO HYPERPARAMETERS
+  # ============================================================================
+  # Hyperparameters for Model Zoo models (requires model_zoo.py)
+  # To use these models, add them to regressor_models list above.
+
+    model_zoo:
+      # LightGBM: Gradient boosting decision trees
+      # Excellent for tabular financial data, handles feature interactions
+      lightgbm:
+        params:
+          num_leaves: 63          # More leaves = more capacity
+          learning_rate: 0.05     # Lower LR for better generalization
+          n_estimators: 200       # More trees
+          min_child_samples: 10   # Smaller for financial patterns
+          subsample: 0.8
+          colsample_bytree: 0.8
+          reg_alpha: 0.1          # L1 regularization
+          reg_lambda: 0.1         # L2 regularization
+      
+      # TCN: Temporal Convolutional Network
+      # Captures multi-scale temporal patterns via dilated convolutions
+      tcn:
+        # GPU Acceleration: Override global use_gpu for this model
+        # Options: true | false | null (use global default)
+        use_gpu: true
+        params:
+          num_channels: [128, 128, 64, 64, 32]  # Deeper network for complex patterns
+          kernel_size: 5                         # Larger kernel = longer context
+          dropout: 0.25
+          epochs: 300
+          batch_size: 32
+          lr: 0.0005
+          patience: 40
+      
+      # N-BEATS: Interpretable time series model
+      # Decomposes forecast into interpretable components
+      nbeats:
+        # GPU Acceleration: Override global use_gpu for this model
+        # Options: true | false | null (use global default)
+        use_gpu: true
+        params:
+          num_blocks: 6           # More blocks for capacity
+          hidden_dim: 128         # Larger hidden dimension
+          epochs: 300
+          batch_size: 32
+          lr: 0.0005
+          patience: 40
+    
+    # MoE: Mixture of Experts (Extensible regime-aware ensemble)
+    # Supports ANY combination of the following expert types:
+    #   - linear: Simple linear regression (fast baseline)
+    #   - dnn: Deep NN with residual connections + SE attention (from regressor_dnn)
+    #   - lstm: Bidirectional LSTM with multi-head attention (from regressor_lstm)
+    #   - xlstm: Extended LSTM with matrix memory (from regressor_xlstm)
+    #   - tcn: Temporal Convolutional Network
+    #   - nbeats: N-BEATS interpretable forecast
+    # Each expert uses hyperparameters from model_hyperparameters.regressor_* or model_zoo.*
+    # FAST TEST: lightweight experts
+    moe:
+      # GPU Acceleration: Override global use_gpu for this model
+      # Options: true | false | null (use global default)
+      use_gpu: null
+      params:
+        # List of expert types to use (select from: linear, dnn, lstm, xlstm, tcn, nbeats)
+        expert_types: ['linear', 'dnn', 'tcn']
+        
+        # Optional: Override specific expert hyperparameters
+        # If not specified, uses defaults from model_hyperparameters.regressor_* or model_zoo.*
+        # expert_configs:
+        #   dnn:
+        #     layers: [512, 256, 128]
+        #     dropout: [0.3, 0.25, 0.2]
+        #   tcn:
+        #     num_channels: [128, 64, 32]
+        #     kernel_size: 5
+        #   xlstm:
+        #     num_blocks: 3
+        #     num_heads: 8
+        
+        # Gating network hidden dimension
+        gating_hidden_dim: 32
+        
+        # Training parameters
+        epochs: 10
+        batch_size: 32
+        lr: 0.001
+    
+    # Multi-Task: Joint regression + classification
+    # FAST TEST: fewer epochs
+    multitask:
+      params:
+        num_classes: 3  # UP/DOWN/SIDEWAYS
+        epochs: 10
+        batch_size: 32
+        lr: 0.001
+  
+  # Holdout Days: Number of days to hold out for true out-of-sample validation
+  # Options: Integer (typically 20-60)
+  # Meaning: Training uses all data EXCEPT the last N days, which are used for holdout validation
+  # This ensures no data leakage - models never see the most recent data during training
+  # FAST TEST: smaller holdout
+  holdout_days: 20
+  
+  # Trend Window: Days to use for trend classification
+  # Options: Integer (typically 3-10)
+  # Meaning: If price changes >2% in this window, classify as UP/DOWN, else SIDEWAYS
+  # For multi-step mode: Uses forecast_horizon instead
+  trend_window: 10
+  
+  # Forecast Horizon: Number of days/periods to forecast (MULTI-STEP)
+  # Options: Integer (typically 5-30)
+  # FAST TEST: shorter horizon
+  # Each model predicts 5 future values: [Close_{t+1}, ..., Close_{t+5}]
+  forecast_horizon: 10
+  
+  # Forecast Mode: How to generate predictions
+  # Options: "multioutput" | "recursive"
+  # - multioutput: Models predict all horizon steps at once (recommended for holdout validation)
+  # - recursive: Step-by-step prediction (used for future forecasts beyond known data)
+  # Default: multioutput
+  forecast_mode: "multioutput"
+  
+  # Target Transform: How to transform target values for model training
+  # Options: "price" | "pct_change" | "log_return"
+  # - "price": Models predict absolute prices directly
+  # - "pct_change": Models predict % changes (e.g., +2.5% = 0.025), then convert back to prices
+  # - "log_return": Models predict log returns (log(p_t/p_{t-1})), more stable for volatile assets
+  # Recommended: "log_return" for crypto (handles volatility), "pct_change" for stocks
+  # Note: log_return is more numerically stable and treats up/down moves symmetrically
+  target_transform: "log_return"
+  
+  # ============================================================================
+  # OUTLIER FILTERING (Training Data Only)
+  # ============================================================================
+  # Remove extreme outliers from training data based on target values.
+  # This helps models focus on typical price movements, not rare extreme events.
+  # NOTE: Only applies to training data, NOT holdout data (to preserve realistic evaluation).
+  
+  outlier_filter:
+    # Enabled: Whether to apply outlier filtering
+    # Options: true | false
+    enabled: true
+    
+    # Percentile: Remove samples in the top and bottom X percentile of target values
+    # Options: Float 0.0-10.0 (percent)
+    # Example: 1.0 = remove top 1% and bottom 1% (2% total)
+    # For multi-step forecasting, uses max/min across all horizon steps per sample
+    percentile: 2.0
+    
+    # Method: How to compute the extreme value for multi-step targets
+    # Options: "max_abs" | "mean" | "max" | "min"
+    # - "max_abs": Use max(|min|, |max|) across horizon - catches extreme moves in either direction
+    # - "mean": Use mean across horizon - filters based on average movement
+    # - "max": Use max value across horizon - filters extreme upward moves
+    # - "min": Use min value across horizon - filters extreme downward moves
+    method: "max_abs"
+
+  # ============================================================================
+  # DATA AUGMENTATION (Training Data Only)
+  # ============================================================================
+  # Increase training data size using augmentation techniques.
+  # NOTE: Only applies to training data, NEVER to holdout/validation/test sets.
+  # This prevents data leakage and ensures fair evaluation.
+  
+  data_augmentation:
+    # Enabled: Whether to apply data augmentation
+    # Options: true | false
+    enabled: false
+    
+    # Preset: Use a predefined augmentation configuration
+    # Options: null (use custom config) | "minimal" | "standard" | "aggressive" | 
+    #          "financial" | "volatility" | "tail_risk"
+    # When set, overrides individual method settings below
+    # - "minimal": Light augmentation (jitter + scale)
+    # - "standard": Balanced (jitter, scale, magnitude_warp, pattern_morph)
+    # - "aggressive": Heavy augmentation for small datasets
+    # - "financial": Optimized for financial time series (volatility, bootstrap, tail)
+    # - "volatility": Focus on volatility regime handling
+    # - "tail_risk": Focus on extreme event handling
+    preset: "financial"
+    
+    # Methods: List of augmentation techniques to apply
+    # BASIC methods:
+    #   - "jitter": Add Gaussian noise to features (not target)
+    #   - "scale": Multiply features by random factor (simulates volatility regimes)
+    #   - "window_crop": Create subsequences from training data
+    #   - "mixup": Interpolate between training samples
+    #
+    # ADVANCED methods (recommended for financial time series):
+    #   - "volatility_regime": GARCH-like volatility clustering
+    #   - "block_bootstrap": Preserve autocorrelation via block resampling
+    #   - "frequency_mask": FFT-based frequency band masking/removal
+    #   - "pattern_morph": DTW-like pattern interpolation between neighbors
+    #   - "trend_inject": Add synthetic trend components
+    #   - "regime_noise": Volatility-proportional noise injection
+    #   - "tail_augment": Amplify extreme/tail events
+    #   - "feature_rotation": Rotate in PCA space for diversity
+    #   - "smote_ts": SMOTE adapted for time series regression
+    #   - "magnitude_warp": Smooth time-varying magnitude scaling
+    methods: ["jitter", "volatility_regime", "block_bootstrap"]
+    
+    # Number of Augmentations: How many augmented copies per method
+    # Options: Integer >= 1
+    # Total multiplier ≈ 1 + (len(methods) × n_augmentations)
+    # Example: methods=["jitter", "volatility_regime"], n_augmentations=2 → 5x data
+    n_augmentations: 3
+    
+    # ======================== BASIC METHOD PARAMETERS ========================
+    
+    # Jitter Std: Standard deviation for noise injection (as fraction of feature std)
+    # Options: Float 0.001-0.1
+    # Meaning: 0.02 = add noise with std = 2% of each feature's standard deviation
+    jitter_std: 0.02
+    
+    # Scale Range: Min/max scaling factors for magnitude scaling
+    # Options: [min, max] where 0.5 < min < max < 1.5
+    # Meaning: [0.9, 1.1] = scale features by random factor between 0.9x and 1.1x
+    scale_range: [0.9, 1.1]
+    
+    # Window Crop Ratio: Fraction of sequence to keep for window cropping
+    # Options: Float 0.5-0.95
+    window_crop_ratio: 0.9
+    
+    # Mixup Alpha: Beta distribution parameter for mixup interpolation
+    # Options: Float 0.1-0.5
+    # Smaller = samples closer to original, larger = more interpolation
+    mixup_alpha: 0.2
+    
+    # ======================== ADVANCED METHOD PARAMETERS ========================
+    
+    # GARCH Parameters (for volatility_regime method)
+    # Simulates volatility clustering: σ²_t = α * ε²_{t-1} + β * σ²_{t-1}
+    garch_alpha: 0.1   # News impact (0.05-0.2)
+    garch_beta: 0.85   # Volatility persistence (0.8-0.95)
+    
+    # Block Bootstrap (for block_bootstrap method)
+    # Block size determines autocorrelation preservation
+    block_size: 20     # Number of consecutive samples per block
+    
+    # Frequency Masking (for frequency_mask method)
+    # Removes specific frequency components via FFT
+    freq_mask_ratio: 0.15  # Fraction of frequencies to mask (0.05-0.3)
+    freq_band: "mid"       # Which band: "low", "mid", "high", "random"
+    
+    # Pattern Morphing (for pattern_morph method)
+    # Interpolates between similar patterns (like SMOTE for regression)
+    morph_n_neighbors: 5   # Number of neighbors to consider (3-10)
+    morph_alpha: 0.3       # Max interpolation strength (0.1-0.5)
+    
+    # Trend Injection (for trend_inject method)
+    # Adds synthetic trend components (linear, quadratic, or sinusoidal)
+    trend_magnitude: 0.02  # Max trend magnitude as fraction of std (0.01-0.1)
+    
+    # Regime-Conditional Noise (for regime_noise method)
+    # Noise proportional to local volatility estimate
+    regime_vol_multiplier: [0.5, 2.0]  # Low/high volatility noise scaling
+    
+    # Tail Risk Augmentation (for tail_augment method)
+    # Amplifies extreme events for better tail coverage
+    tail_percentile: 5     # Percentile threshold for tails (1-10)
+    tail_amplify: 1.5      # Amplification factor (1.2-2.0)
+    
+    # Feature Rotation (for feature_rotation method)
+    # Rotates in PCA space for sample diversity
+    pca_components: 0.95   # Variance to retain (0.9-0.99)
+    rotation_angle_std: 0.1  # Rotation angle std in radians (0.05-0.2)
+    
+    # Random Seed: For reproducibility of augmentation
+    # Options: Integer or null
+    seed: 42
+
+
+  # Holdout Stride: Step size for rolling holdout evaluation
+  # Options: Integer >= 1
+  # Meaning: Evaluate holdout every N samples (1 = every sample)
+  # Higher values speed up evaluation but reduce sample size
+  holdout_stride: 1
+  
+  # Holdout Aggregation: How to aggregate multiple predictions per date
+  # Options: "mean" | "median"
+  # Meaning: When rolling 10-day forecasts, each date may have multiple predictions
+  holdout_agg: "mean"
+  
+  # Trend Horizon: Days ahead for trend classification (should match forecast_horizon)
+  # Options: Integer (typically same as forecast_horizon)
+  trend_horizon: 10
+  
+  # Trend Threshold: Percentage change threshold for UP/DOWN classification
+  # Options: Float (0.01 = 1%, 0.02 = 2%)
+  # Meaning: |change| >= threshold → UP/DOWN, else SIDEWAYS
+  trend_threshold: 0.001
+  
+  # Train/Test Split Ratio: Proportion of training data for internal validation
+  # Options: Float between 0.1-0.3 (default: 0.15)
+  # Note: This is WITHIN training data, separate from holdout
+  test_size: 0.15
+  
+  # Random State: Seed for reproducibility
+  # Options: Integer or null (default: 42)
+  random_state: 42
+
+
+# ============================================================================
+# OUTPUT CONFIGURATION
+# ============================================================================
+
+output:
+  # Output Folder: Directory to save downloaded data and transformed features
+  # Options: Any valid path (created automatically if doesn't exist)
+  folder: "out"
+  
+  # Save Raw Data: Save original downloaded data to CSV
+  # Options: true | false
+  save_raw_data: true
+  
+  # Save Transformed Features: Save final engineered features to CSV
+  # Options: true | false
+  save_transformed_features: true
+  
+  # Save Summary: Save data loading and transformation summary
+  # Options: true | false
+  save_summary: true
+
+
+# ============================================================================
+# REPORTING CONFIGURATION
+# ============================================================================
+# Controls what visualizations and metrics appear in the HTML benchmark report.
+# All options are designed to help analyze model performance efficiently.
+
+reporting:
+  # -------------------------------------------------------------------------
+  # REPORT STRUCTURE
+  # -------------------------------------------------------------------------
+  
+  # Collapsible Sections: Use expandable/collapsible sections for cleaner report
+  # Options: true | false
+  # When true, individual model details are collapsed by default
+  use_collapsible_sections: true
+  
+  # Dark Mode: Use dark theme for report (easier on eyes)
+  # Options: true | false
+  dark_mode: false
+  
+  # -------------------------------------------------------------------------
+  # HOLDOUT VALIDATION PLOTS
+  # -------------------------------------------------------------------------
+  
+  # Show Holdout Ensemble Band: Display uncertainty band in holdout plot
+  # Options: true | false
+  show_holdout_ensemble_band: true
+  
+  # Holdout Plot Style: How to display holdout predictions
+  # Options: "overlay" | "faceted" | "both"
+  # - overlay: All models on one plot (good for comparison)
+  # - faceted: Each model gets its own subplot (clearer individual analysis)
+  # - both: Show both overlay and faceted versions
+  holdout_plot_style: "both"
+  
+  # Show Per-Step Metrics: Display RMSE/MAE for each forecast step
+  # Options: true | false
+  # This shows how error accumulates over the forecast horizon
+  show_per_step_metrics: true
+  
+  # -------------------------------------------------------------------------
+  # MODEL VS GROUND TRUTH PLOTS
+  # -------------------------------------------------------------------------
+  
+  # Show Predictions vs Actual: Main comparison plot for each model
+  # Options: true | false
+  show_predictions_vs_actual: true
+  
+  # Show Error Distribution: Histogram of prediction errors
+  # Options: true | false
+  # Helps identify bias (skewed errors) vs variance (wide distribution)
+  show_error_distribution: true
+  
+  # Show Residual Analysis: Residual plots for each regressor
+  # Options: true | false
+  show_residual_analysis: true
+  
+  # Show Time Series Overlay: Predictions overlaid on actual time series
+  # Options: true | false
+  show_timeseries_overlay: true
+  
+  # Num Sample Forecasts: Number of random test samples to visualize
+  # Options: Integer (3-20)
+  # Each sample shows history + forecast vs actual future
+  num_sample_forecasts: 5
+  
+  # -------------------------------------------------------------------------
+  # MODEL COMPARISON
+  # -------------------------------------------------------------------------
+  
+  # Show Model Comparison Table: Summary table comparing all models
+  # Options: true | false
+  show_model_comparison_table: true
+  
+  # Show Model Ranking Chart: Bar chart of model performance ranking
+  # Options: true | false
+  show_model_ranking_chart: true
+  
+  # Comparison Metrics: Which metrics to show in comparison
+  # Options: List from ["rmse", "mae", "r2", "mape", "directional_accuracy"]
+  comparison_metrics: ["rmse", "mae", "r2"]
+  
+  # Show Beats Naive Badge: Highlight models that beat naive baseline
+  # Options: true | false
+  show_beats_naive_badge: true
+  
+  # -------------------------------------------------------------------------
+  # TRAINING DIAGNOSTICS
+  # -------------------------------------------------------------------------
+  
+  # Show Training Curves: Loss/accuracy curves for neural networks
+  # Options: true | false
+  show_training_curves: true
+  
+  # Show Learning Rate Schedule: Display LR decay if applicable
+  # Options: true | false
+  show_lr_schedule: false
+  
+  # Show Confusion Matrix: For classifiers
+  # Options: true | false
+  show_confusion_matrix: true
+  
+  # Show Classifier Probabilities: Display class probabilities if available
+  show_classifier_proba: true
+  
+  # -------------------------------------------------------------------------
+  # ADVANCED MODEL PLOTS
+  # -------------------------------------------------------------------------
+  
+  # Show Feature Importance: For tree-based models (LightGBM, RF)
+  # Options: true | false
+  show_feature_importance: true
+  
+  # Feature Importance Top K: Number of top features to display
+  # Options: Integer (5-50)
+  feature_importance_top_k: 20
+  
+  # Show Attention Weights: For LSTM with attention
+  # Options: true | false
+  show_attention_weights: true
+  
+  # -------------------------------------------------------------------------
+  # FORECAST DISPLAY
+  # -------------------------------------------------------------------------
+  
+  # Plot Step Curves: Which forecast steps to show in detailed plots
+  # Options: List of integers (e.g., [1, 5, 10])
+  plot_step_curves: [1, 5, 10]
+  
+  # Show Future Forecast Table: Display future predictions table
+  show_future_table: true
+  
+  # Future Forecast Days to Show: How many steps to display in table
+  # Options: Integer (5-30)
+  future_forecast_days_to_show: 10
+  
+  # Show Prediction Intervals: Display confidence intervals for forecasts
+  # Options: true | false
+  # Note: Only available for ensemble or models that provide uncertainty
+  show_prediction_intervals: true
+  
+  # -------------------------------------------------------------------------
+  # PIPELINE & DATA INFORMATION
+  # -------------------------------------------------------------------------
+  
+  # Show Pipeline Overview: Display data flow diagram
+  # Options: true | false
+  show_pipeline_overview: true
+  
+  # Show Feature List: Display all features used
+  # Options: true | false
+  show_feature_list: true
+  
+  # Show Data Statistics: Display basic stats about training/holdout data
+  # Options: true | false
+  show_data_statistics: true
+  
+  # Show Outlier Filter Summary: Display what was filtered
+  # Options: true | false
+  show_outlier_filter_summary: true
+
+
+# BELOW HERE IS CURRENTLY NOT SUPPORTED - IDEA: ADD A LLM-BASED REVIEW OF THE REPORT
+# AND AUTOMATIC INSIGHTS EXTRACTION FOR NEXT PROMT TO IMPROVE MODELING ETC.
+# AND FEED TO THE NEXT LOOP OF MODEL TRAINING/SELECTION.
+
+# ============================================================================
+# LLM CONFIGURATION (Ollama Integration) - DISABLED
+# ============================================================================
+# NOTE: LLM review feature is currently disabled and may be re-enabled in future.
+# The configuration is preserved here for reference.
+
+# llm:
+#   enabled: false
+#   base_url: "http://localhost:11434"
+#   model: "llama3.1:8b-instruct"
+#   timeout_s: 120
+#   temperature: 0.7

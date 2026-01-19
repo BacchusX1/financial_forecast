@@ -1,0 +1,4 @@
+Run this from the repo root:
+
+python doc/generator_fromMD_FILE.py doc/DOCS_SYSTEM_ARCHITECTURE.md \
+	-o doc/trading_forecast_v2.html --title "Trading Forecast v2"

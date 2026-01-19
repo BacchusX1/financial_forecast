@@ -1,0 +1,1147 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Trading Forecast v2</title>
+  <style>
+:root{
+  --bg: #0b0f17;
+  --panel: #0f1624;
+  --text: #e6edf3;
+  --muted: #9aa7b2;
+  --border: rgba(255,255,255,.10);
+  --accent: #7aa2f7;
+  --link: #7dcfff;
+  --codebg: #0a0f1a;
+  --shadow: rgba(0,0,0,.35);
+}
+
+@media (prefers-color-scheme: light) {
+  :root{
+    --bg: #ffffff;
+    --panel: #f7f8fa;
+    --text: #111827;
+    --muted: #6b7280;
+    --border: rgba(0,0,0,.10);
+    --accent: #2563eb;
+    --link: #1d4ed8;
+    --codebg: #0b1020;
+    --shadow: rgba(0,0,0,.08);
+  }
+}
+
+*{ box-sizing: border-box; }
+html,body{ height:100%; }
+body{
+  margin:0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+}
+
+a{ color: var(--link); text-decoration: none; }
+a:hover{ text-decoration: underline; }
+
+.container{
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 36px 20px 60px;
+}
+
+.header{
+  background: linear-gradient(135deg, rgba(122,162,247,.18), rgba(125,207,255,.10));
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 22px 22px;
+  box-shadow: 0 10px 30px var(--shadow);
+  margin-bottom: 18px;
+}
+
+.header h1{
+  margin: 0 0 6px 0;
+  font-size: 28px;
+  line-height: 1.25;
+}
+
+.header .subtitle{
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.layout{
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+@media (max-width: 980px){
+  .layout{ grid-template-columns: 1fr; }
+  .toc{ position: static !important; }
+}
+
+.card{
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 10px 30px var(--shadow);
+}
+
+.toc{
+  position: sticky;
+  top: 16px;
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+}
+
+.toc h2{
+  margin: 0 0 10px 0;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--muted);
+}
+
+.toc ul{ margin: 0; padding-left: 18px; }
+.toc li{ margin: 6px 0; }
+.toc a{ color: var(--text); opacity: .9; }
+.toc a:hover{ opacity: 1; }
+
+.content h2{ margin-top: 30px; }
+.content h3{ margin-top: 22px; }
+.content h4{ margin-top: 18px; }
+
+hr{
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 26px 0;
+}
+
+p{ margin: 10px 0; color: rgba(255,255,255,.92); }
+@media (prefers-color-scheme: light){ p{ color: rgba(17,24,39,.92); } }
+
+blockquote{
+  margin: 14px 0;
+  padding: 10px 14px;
+  border-left: 4px solid var(--accent);
+  background: rgba(122,162,247,.10);
+  border-radius: 10px;
+}
+
+code{
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+  font-size: 0.95em;
+}
+
+pre{
+  background: var(--codebg);
+  color: #e5e7eb;
+  padding: 14px 14px;
+  border-radius: 14px;
+  overflow: auto;
+  border: 1px solid rgba(255,255,255,.08);
+}
+
+pre code{ font-size: .92em; }
+
+table{
+  width: 100%;
+  border-collapse: collapse;
+  margin: 14px 0;
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+}
+
+th, td{
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+th{
+  text-align: left;
+  font-size: 13px;
+  color: var(--muted);
+  background: rgba(255,255,255,.04);
+}
+tr:last-child td{ border-bottom: none; }
+
+.kbd{
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: 8px;
+  padding: 2px 8px;
+  font-family: ui-monospace, monospace;
+  font-size: 0.9em;
+  background: rgba(255,255,255,.05);
+}
+
+.footer{
+  margin-top: 18px;
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
+}
+
+/* Make mermaid blocks look like code until rendered */
+.mermaid{
+  background: var(--codebg);
+  border: 1px solid rgba(255,255,255,.08);
+  padding: 14px;
+  border-radius: 14px;
+  overflow: auto;
+}
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Trading Forecast v2</h1>
+      <p class="subtitle">System Architecture Documentation</p>
+    </div>
+
+    <div class="layout">
+      <aside class="card toc">
+        <h2>Contents</h2>
+        <ul><li><a href="#1-project-overview">1. Project Overview</a></li><li><a href="#2-execution-flow">2. Execution Flow</a></li><li><a href="#3-configuration-structure-configurationyml">3. Configuration Structure (configuration.yml)</a><ul><li><a href="#31-logging-section">3.1 Logging Section</a></li><li><a href="#32-data-loader-section">3.2 Data Loader Section</a></li><li><a href="#33-feature-engineering-section">3.3 Feature Engineering Section</a></li><li><a href="#34-data-science-section">3.4 Data Science Section</a></li><li><a href="#35-reporting-section">3.5 Reporting Section</a></li><li><a href="#36-output-section">3.6 Output Section</a></li></ul></li><li><a href="#4-class-reference">4. Class Reference</a><ul><li><a href="#41-dataloader">4.1 DataLoader</a></li><li><a href="#42-featureengineering">4.2 FeatureEngineering</a></li><li><a href="#43-indicatorengine">4.3 IndicatorEngine</a></li><li><a href="#44-datascientist">4.4 DataScientist</a></li><li><a href="#45-model-zoo">4.5 Model Zoo</a></li><li><a href="#46-data-augmentation">4.6 Data Augmentation</a></li><li><a href="#47-forecast-utilities">4.7 Forecast Utilities</a></li></ul></li><li><a href="#5-data-flow-diagram">5. Data Flow Diagram</a></li><li><a href="#6-leakage-prevention-guarantees">6. Leakage Prevention Guarantees</a></li><li><a href="#7-model-hyperparameters-reference">7. Model Hyperparameters Reference</a><ul><li><a href="#classifiers">Classifiers</a></li><li><a href="#regressors-core">Regressors (Core)</a></li><li><a href="#model-zoo-advanced">Model Zoo (Advanced)</a></li></ul></li><li><a href="#8-target-transforms">8. Target Transforms</a></li><li><a href="#9-data-augmentation-methods">9. Data Augmentation Methods</a></li><li><a href="#10-quick-reference-key-config-paths">10. Quick Reference: Key Config Paths</a></li><li><a href="#11-running-the-pipeline">11. Running the Pipeline</a></li><li><a href="#12-testing">12. Testing</a></li><li><a href="#13-regenerating-this-documentation">13. Regenerating This Documentation</a></li></ul>
+      </aside>
+
+      <main class="card content">
+        <h1 id="trading-forecast-v2-system-architecture-documentation">Trading Forecast v2 - System Architecture Documentation</h1>
+<h2 id="1-project-overview">1. Project Overview</h2>
+<p>A <strong>modular, configuration-driven</strong> ML pipeline for financial time series forecasting with <strong>strict data leakage prevention</strong>.</p>
+<div class="highlight"><pre><span></span><code>trading_forecast_v2/
+├── launcher.py                    # ← ENTRY POINT (CLI)
+├── configuration.yml              # ← Master config file
+├── config_auto.yml                # ← Auto-generated from interactive mode
+├── requirements.txt
+├── doc/
+│   ├── DOCS_SYSTEM_ARCHITECTURE.md      # This document
+│   ├── generator_fromMD_FILE.py         # Markdown → HTML generator
+│   ├── readme                           # How to regenerate HTML
+│   └── trading_forecast_v2.html         # Generated HTML output
+├── src/
+│   ├── config_validator.py        # Configuration validation
+│   └── modules/
+│       ├── dada_loader/
+│       │   └── financial_data_loader.py    # DataLoader class
+│       ├── feature_engineering/
+│       │   ├── feature_engineering.py      # FeatureEngineering class
+│       │   ├── feature_processor.py        # PCA/Autoencoder post-split
+│       │   ├── feature_pruner.py           # Correlation/NaN filtering
+│       │   ├── feature_scale_classifier.py # Scale-free feature detection
+│       │   ├── indicator_engine.py         # Technical indicators
+│       │   └── indicator_registry.py       # 112+ indicator definitions
+│       ├── data_science/
+│       │   ├── data_science.py             # DataScientist class
+│       │   ├── data_augmentor.py           # Training data augmentation
+│       │   ├── model_zoo.py                # Advanced models (xLSTM, TCN, N-BEATS, MoE)
+│       │   ├── report_generator.py         # HTML report generation
+│       │   └── forecast_utils.py           # Multi-step utilities
+│       └── llm/
+│           └── ollama_client.py            # Local LLM integration (disabled)
+└── out/                           # ← OUTPUT (auto-created)
+    ├── raw_data/                  # Downloaded OHLCV CSVs
+    ├── transformed_features/      # Engineered features + labels
+    ├── models_YYYYMMDD_HHMMSS/    # Model outputs &amp; reports
+    │   ├── benchmark_report_advanced.html
+    │   ├── benchmark_results.json
+    │   ├── training_data/
+    │   └── *.pt, *.pkl (saved models)
+    └── summaries/
+</code></pre></div>
+<hr/>
+<h2 id="2-execution-flow">2. Execution Flow</h2>
+<div class="highlight"><pre><span></span><code>┌─────────────────────────────────────────────────────────────────────────────┐
+│                           launcher.py (main)                                │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  1. Load configuration.yml  ──►  ConfigValidator.validate()                │
+│  2. Create output directories                                               │
+│  3. Run pipeline: run_pipeline(config)                                      │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                      │
+              ┌───────────────────────┼───────────────────────┐
+              ▼                       ▼                       ▼
+┌─────────────────────┐  ┌─────────────────────┐  ┌─────────────────────┐
+│  Step 1: Data Load  │  │ Step 2: Feature Eng │  │ Step 3: ML Training │
+│    DataLoader       │  │ FeatureEngineering  │  │   DataScientist     │
+└─────────────────────┘  └─────────────────────┘  └─────────────────────┘
+         │                        │                        │
+         ▼                        ▼                        ▼
+    data_dict[ticker]        transformed_df          benchmark_results
+    (raw OHLCV)              (features + labels)     (models + reports)
+</code></pre></div>
+<hr/>
+<h2 id="3-configuration-structure-configurationyml">3. Configuration Structure (configuration.yml)</h2>
+<h3 id="31-logging-section">3.1 Logging Section</h3>
+<div class="highlight"><pre><span></span><code><span class="nt">logging</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">level</span><span class="p">:</span><span class="w"> </span><span class="s">"DEBUG"</span><span class="w">              </span><span class="c1"># DEBUG | INFO | WARNING | ERROR</span>
+<span class="w">  </span><span class="c1"># Training logs auto-saved to out/models_*/log.txt with colors</span>
+</code></pre></div>
+<h3 id="32-data-loader-section">3.2 Data Loader Section</h3>
+<div class="highlight"><pre><span></span><code><span class="nt">data_loader</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">keys</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"BTC"</span><span class="p p-Indicator">]</span><span class="w">               </span><span class="c1"># Tickers to download</span>
+<span class="w">  </span><span class="nt">category</span><span class="p">:</span><span class="w"> </span><span class="s">"crypto"</span><span class="w">          </span><span class="c1"># "crypto" | "stock"</span>
+<span class="w">  </span><span class="nt">candle_length</span><span class="p">:</span><span class="w"> </span><span class="s">"5m"</span><span class="w">         </span><span class="c1"># 1m, 5m, 15m, 1h, 1d, 1wk, 1mo</span>
+<span class="w">  </span><span class="nt">period</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span><span class="w">                </span><span class="c1"># Years (null = auto-max for interval)</span>
+<span class="w">  </span><span class="nt">start_date</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span><span class="w">            </span><span class="c1"># Override: "YYYY-MM-DD"</span>
+<span class="w">  </span><span class="nt">end_date</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span><span class="w">              </span><span class="c1"># Override: "YYYY-MM-DD"</span>
+<span class="w">  </span><span class="nt">extended_download</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w">    </span><span class="c1"># Bypass API limits with chunked requests</span>
+<span class="w">  </span><span class="nt">chunk_overlap_days</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span><span class="w">       </span><span class="c1"># Overlap for deduplication</span>
+<span class="w">  </span><span class="nt">request_delay_seconds</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2.0</span><span class="w">  </span><span class="c1"># Delay between API requests</span>
+</code></pre></div>
+<p><strong>API Limits:</strong> 1m=7d, 5m-90m=60d, 1h=730d, 1d+=unlimited</p>
+<p><strong>Extended Download:</strong> Set <code>extended_download: true</code> to fetch data beyond API limits by making multiple chunked requests automatically.</p>
+<h3 id="33-feature-engineering-section">3.3 Feature Engineering Section</h3>
+<div class="highlight"><pre><span></span><code><span class="nt">feature_engineering</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">scaler</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span><span class="w">                        </span><span class="c1"># MUST be null for ML (prevents leakage)</span>
+<span class="w">  </span><span class="nt">target_columns</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"Close"</span><span class="p p-Indicator">]</span>
+<span class="w">  </span><span class="nt">allow_absolute_scale_features</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w"> </span><span class="c1"># Scale-free mode (recommended)</span>
+
+<span class="w">  </span><span class="c1"># Lag and rolling features (tuned for 5-min candles)</span>
+<span class="w">  </span><span class="nt">lag_features</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">3</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">6</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">12</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">24</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">48</span><span class="p p-Indicator">]</span><span class="w">     </span><span class="c1"># 48 = 4 hours</span>
+<span class="w">  </span><span class="nt">rolling_windows</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">6</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">12</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">24</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">48</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">96</span><span class="p p-Indicator">]</span><span class="w">    </span><span class="c1"># 96 = 8 hours</span>
+<span class="w">  </span><span class="nt">rolling_functions</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"mean"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"std"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"min"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"max"</span><span class="p p-Indicator">]</span>
+
+<span class="w">  </span><span class="c1"># Dimensionality reduction</span>
+<span class="w">  </span><span class="nt">pca_components</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+<span class="w">  </span><span class="nt">autoencoder_latent_dim</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span><span class="w">  </span><span class="c1"># Set to integer to enable</span>
+<span class="w">  </span><span class="nt">autoencoder_epochs</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50</span>
+
+<span class="w">  </span><span class="nt">group_by_ticker</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">exclude_from_scaling</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span>
+
+<span class="w">  </span><span class="c1"># Technical indicators (112+ available)</span>
+<span class="w">  </span><span class="nt">indicator_set</span><span class="p">:</span><span class="w"> </span><span class="s">"expanded_v1"</span>
+<span class="w">  </span><span class="nt">indicators</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">enabled_groups</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"returns"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"trend"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"volatility"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"momentum"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"volume"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"candle"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"regime"</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">params</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">rsi</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">14</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">28</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">48</span><span class="p p-Indicator">]</span>
+<span class="w">      </span><span class="nt">atr</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">14</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">28</span><span class="p p-Indicator">]</span>
+<span class="w">      </span><span class="nt">bbands</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[{</span><span class="nt">length</span><span class="p">:</span><span class="w"> </span><span class="nv">20</span><span class="p p-Indicator">,</span><span class="nt"> std</span><span class="p">:</span><span class="w"> </span><span class="nv">2</span><span class="p p-Indicator">}]</span>
+<span class="w">      </span><span class="nt">macd</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[{</span><span class="nt">fast</span><span class="p">:</span><span class="w"> </span><span class="nv">12</span><span class="p p-Indicator">,</span><span class="nt"> slow</span><span class="p">:</span><span class="w"> </span><span class="nv">26</span><span class="p p-Indicator">,</span><span class="nt"> signal</span><span class="p">:</span><span class="w"> </span><span class="nv">9</span><span class="p p-Indicator">}]</span>
+<span class="w">      </span><span class="nt">sma</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">6</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">12</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">24</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">48</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">144</span><span class="p p-Indicator">]</span>
+<span class="w">      </span><span class="nt">ema</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">6</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">12</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">24</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">48</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">144</span><span class="p p-Indicator">]</span>
+
+<span class="w">  </span><span class="c1"># Leakage prevention</span>
+<span class="w">  </span><span class="nt">leakage_guard</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">enforce_shift_1</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">             </span><span class="c1"># Auto-shift all indicators by 1 period</span>
+<span class="w">    </span><span class="nt">fail_on_unshifted_columns</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+
+<span class="w">  </span><span class="c1"># Feature pruning</span>
+<span class="w">  </span><span class="nt">feature_pruning</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">drop_constant</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="nt">drop_high_nan_ratio</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.2</span>
+<span class="w">    </span><span class="nt">correlation_filter</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">      </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="s">"spearman"</span>
+<span class="w">      </span><span class="nt">threshold</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.98</span>
+</code></pre></div>
+<h3 id="34-data-science-section">3.4 Data Science Section</h3>
+<div class="highlight"><pre><span></span><code><span class="nt">data_science</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">use_gpu</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">                 </span><span class="c1"># GPU acceleration for PyTorch models</span>
+
+<span class="w">  </span><span class="c1"># Models to train</span>
+<span class="w">  </span><span class="nt">classifier_models</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span><span class="w">         </span><span class="c1"># ["dnn", "svc", "random_forest"]</span>
+<span class="w">  </span><span class="nt">regressor_models</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"dnn"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"xlstm"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"tcn"</span><span class="p p-Indicator">]</span>
+
+<span class="w">  </span><span class="c1"># Core parameters</span>
+<span class="w">  </span><span class="nt">forecast_horizon</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span><span class="w">          </span><span class="c1"># Steps to predict</span>
+<span class="w">  </span><span class="nt">holdout_days</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20</span><span class="w">              </span><span class="c1"># Last N samples for validation</span>
+<span class="w">  </span><span class="nt">target_transform</span><span class="p">:</span><span class="w"> </span><span class="s">"log_return"</span><span class="w"> </span><span class="c1"># "price" | "pct_change" | "log_return"</span>
+<span class="w">  </span><span class="nt">forecast_mode</span><span class="p">:</span><span class="w"> </span><span class="s">"multioutput"</span><span class="w">  </span><span class="c1"># "multioutput" | "recursive"</span>
+
+<span class="w">  </span><span class="c1"># Outlier filtering (training only)</span>
+<span class="w">  </span><span class="nt">outlier_filter</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="nt">percentile</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2.0</span>
+<span class="w">    </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="s">"max_abs"</span><span class="w">           </span><span class="c1"># max_abs | mean | max | min</span>
+
+<span class="w">  </span><span class="c1"># Data augmentation (training only)</span>
+<span class="w">  </span><span class="nt">data_augmentation</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="nt">preset</span><span class="p">:</span><span class="w"> </span><span class="s">"financial"</span><span class="w">         </span><span class="c1"># minimal | standard | aggressive | financial | volatility | tail_risk</span>
+<span class="w">    </span><span class="nt">methods</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"jitter"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"volatility_regime"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"block_bootstrap"</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">n_augmentations</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+<span class="w">    </span><span class="c1"># GARCH parameters</span>
+<span class="w">    </span><span class="nt">garch_alpha</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.1</span>
+<span class="w">    </span><span class="nt">garch_beta</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.85</span>
+<span class="w">    </span><span class="nt">block_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20</span>
+
+<span class="w">  </span><span class="c1"># Feature processing (post-split)</span>
+<span class="w">  </span><span class="nt">feature_processing</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="s">"raw+pca+ae"</span><span class="w">          </span><span class="c1"># raw | raw+pca | raw+ae | raw+pca+ae</span>
+<span class="w">    </span><span class="nt">pca</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">      </span><span class="nt">n_components</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+<span class="w">    </span><span class="nt">autoencoder</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">      </span><span class="nt">latent_dim</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8</span>
+<span class="w">      </span><span class="nt">epochs</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+
+<span class="w">  </span><span class="c1"># Model hyperparameters</span>
+<span class="w">  </span><span class="nt">model_hyperparameters</span><span class="p">:</span>
+<span class="w">    </span><span class="c1"># Classifier DNN</span>
+<span class="w">    </span><span class="nt">classifier_dnn</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">layers</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">64</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">32</span><span class="p p-Indicator">]</span>
+<span class="w">      </span><span class="nt">dropout</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.3</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.2</span><span class="p p-Indicator">]</span>
+<span class="w">      </span><span class="nt">activation</span><span class="p">:</span><span class="w"> </span><span class="s">"relu"</span>
+<span class="w">      </span><span class="nt">epochs</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+<span class="w">      </span><span class="nt">batch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">64</span>
+
+<span class="w">    </span><span class="c1"># Regressor DNN (ResNet + SE-Attention)</span>
+<span class="w">    </span><span class="nt">regressor_dnn</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">layers</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">128</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">64</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">32</span><span class="p p-Indicator">]</span>
+<span class="w">      </span><span class="nt">dropout</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.2</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.15</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.1</span><span class="p p-Indicator">]</span>
+<span class="w">      </span><span class="nt">activation</span><span class="p">:</span><span class="w"> </span><span class="s">"gelu"</span>
+<span class="w">      </span><span class="nt">epochs</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+<span class="w">      </span><span class="nt">use_layer_norm</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">      </span><span class="nt">use_se_attention</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">      </span><span class="nt">use_residual</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+
+<span class="w">    </span><span class="c1"># LSTM (Bidirectional + Multi-Head Attention)</span>
+<span class="w">    </span><span class="nt">regressor_lstm</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">timesteps</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
+<span class="w">      </span><span class="nt">lstm_units</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">64</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">32</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">16</span><span class="p p-Indicator">]</span>
+<span class="w">      </span><span class="nt">attention</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">num_heads</span><span class="p">:</span><span class="w"> </span><span class="nv">4</span><span class="p p-Indicator">,</span><span class="nt"> key_dim</span><span class="p">:</span><span class="w"> </span><span class="nv">16</span><span class="p p-Indicator">}</span>
+<span class="w">      </span><span class="nt">epochs</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+<span class="w">      </span><span class="nt">bidirectional</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+
+<span class="w">    </span><span class="c1"># xLSTM (Extended LSTM with Matrix Memory)</span>
+<span class="w">    </span><span class="nt">regressor_xlstm</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">timesteps</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
+<span class="w">      </span><span class="nt">num_blocks</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span><span class="w">             </span><span class="c1"># Keep small (1-4) for fast training</span>
+<span class="w">      </span><span class="nt">num_heads</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span><span class="w">              </span><span class="c1"># Keep small (2-4)</span>
+<span class="w">      </span><span class="nt">dropout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.15</span>
+<span class="w">      </span><span class="nt">epochs</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50</span>
+<span class="w">      </span><span class="nt">patience</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+
+<span class="w">    </span><span class="c1"># KRR (Kernel Ridge Regression)</span>
+<span class="w">    </span><span class="nt">regressor_krr</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">use_grid_search</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">      </span><span class="nt">grid_search</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">alpha</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.001</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.01</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.1</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1.0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">10.0</span><span class="p p-Indicator">]</span>
+<span class="w">        </span><span class="nt">gamma</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.001</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.01</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.1</span><span class="p p-Indicator">]</span>
+<span class="w">        </span><span class="nt">kernel</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"rbf"</span><span class="p p-Indicator">]</span>
+
+<span class="w">  </span><span class="c1"># Model Zoo hyperparameters</span>
+<span class="w">  </span><span class="nt">model_zoo</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">lightgbm</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">params</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">num_leaves</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">31</span>
+<span class="w">        </span><span class="nt">learning_rate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.1</span>
+<span class="w">        </span><span class="nt">n_estimators</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50</span>
+
+<span class="w">    </span><span class="nt">tcn</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">params</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">num_channels</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">512</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">512</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">256</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">64</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">10</span><span class="p p-Indicator">]</span>
+<span class="w">        </span><span class="nt">kernel_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50</span>
+<span class="w">        </span><span class="nt">dropout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.2</span>
+<span class="w">        </span><span class="nt">epochs</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">500</span>
+
+<span class="w">    </span><span class="nt">nbeats</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">params</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">num_blocks</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">64</span>
+<span class="w">        </span><span class="nt">hidden_dim</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">128</span>
+<span class="w">        </span><span class="nt">epochs</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">150</span>
+
+<span class="w">    </span><span class="nt">moe</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">params</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">expert_types</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">'linear'</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">'dnn'</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">'tcn'</span><span class="p p-Indicator">]</span>
+<span class="w">        </span><span class="nt">gating_hidden_dim</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">32</span>
+<span class="w">        </span><span class="nt">epochs</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+
+<span class="w">    </span><span class="nt">multitask</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">params</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">num_classes</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+<span class="w">        </span><span class="nt">epochs</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+
+<span class="w">  </span><span class="c1"># Validation</span>
+<span class="w">  </span><span class="nt">trend_window</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+<span class="w">  </span><span class="nt">trend_threshold</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.001</span>
+<span class="w">  </span><span class="nt">test_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.15</span>
+<span class="w">  </span><span class="nt">random_state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">42</span>
+</code></pre></div>
+<h3 id="35-reporting-section">3.5 Reporting Section</h3>
+<div class="highlight"><pre><span></span><code><span class="nt">reporting</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">use_collapsible_sections</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">dark_mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">  </span><span class="nt">holdout_plot_style</span><span class="p">:</span><span class="w"> </span><span class="s">"both"</span><span class="w">      </span><span class="c1"># overlay | faceted | both</span>
+<span class="w">  </span><span class="nt">show_per_step_metrics</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">show_predictions_vs_actual</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">show_error_distribution</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">show_residual_analysis</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">show_model_comparison_table</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">show_model_ranking_chart</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">show_feature_importance</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">feature_importance_top_k</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20</span>
+<span class="w">  </span><span class="nt">show_training_curves</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">show_confusion_matrix</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">num_sample_forecasts</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+<span class="w">  </span><span class="nt">show_prediction_intervals</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">show_pipeline_overview</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">show_data_statistics</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">show_outlier_filter_summary</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</code></pre></div>
+<h3 id="36-output-section">3.6 Output Section</h3>
+<div class="highlight"><pre><span></span><code><span class="nt">output</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">folder</span><span class="p">:</span><span class="w"> </span><span class="s">"out"</span>
+<span class="w">  </span><span class="nt">save_raw_data</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">save_transformed_features</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">save_summary</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</code></pre></div>
+<hr/>
+<h2 id="4-class-reference">4. Class Reference</h2>
+<h3 id="41-dataloader">4.1 DataLoader</h3>
+<p><strong>File:</strong> <code>src/modules/dada_loader/financial_data_loader.py</code></p>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">DataLoader</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Download OHLCV data via yfinance with auto-interval validation."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">assemble_data</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_combined_data</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_summary</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">download_data</span><span class="p">(</span><span class="n">ticker</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>  <span class="c1"># Single ticker</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">download_extended</span><span class="p">(</span><span class="n">ticker</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>  <span class="c1"># Chunked download</span>
+</code></pre></div>
+<p><strong>Key Features:</strong>
+- Normalizes intervals (<code>5min</code> → <code>5m</code>)
+- Auto-adjusts period if exceeds API limit
+- Adds <code>-USD</code> suffix for crypto
+- Extended download mode for bypassing API limits
+- 60-second timeout for large downloads</p>
+<hr/>
+<h3 id="42-featureengineering">4.2 FeatureEngineering</h3>
+<p><strong>File:</strong> <code>src/modules/feature_engineering/feature_engineering.py</code></p>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">FeatureEngineering</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Transform OHLCV data into ML-ready features."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Dict</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">],</span> <span class="n">config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">transform</span><span class="p">(</span><span class="n">exclude_from_scaling</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_lag_features</span><span class="p">(</span><span class="n">df</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_rolling_features</span><span class="p">(</span><span class="n">df</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_indicator_features</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">enabled_groups</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">apply_pca</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">fit</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">apply_autoencoder</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">fit</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">filter_by_scale</span><span class="p">(</span><span class="n">df</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>  <span class="c1"># Scale-free mode</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_summary</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Dict</span>
+</code></pre></div>
+<p><strong>Pipeline Order:</strong>
+1. Indicator features (with <code>.shift(1)</code> for leakage prevention)
+2. Lag features
+3. Rolling features
+4. Feature pruning (constant, NaN, correlation)
+5. Scale filtering (if <code>allow_absolute_scale_features: false</code>)
+6. PCA compression (optional)
+7. Autoencoder latent features (optional)</p>
+<hr/>
+<h3 id="43-indicatorengine">4.3 IndicatorEngine</h3>
+<p><strong>File:</strong> <code>src/modules/feature_engineering/indicator_engine.py</code></p>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">IndicatorEngine</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Compute 112+ technical indicators with leakage prevention."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_indicators</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">enabled_groups</span><span class="p">,</span> <span class="n">custom_params</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">prune_features</span><span class="p">(</span><span class="n">df</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">assert_no_leakage</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">original_cols</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span>
+</code></pre></div>
+<p><strong>Indicator Groups:</strong>
+| Group | Examples |
+|-------|----------|
+| returns | log_return, pct_change, realized_vol, zscore |
+| trend | sma, ema, wma, kama, dema, tema, hma, alma, t3, slope |
+| volatility | atr, bbands, keltner, donchian, parkinson_vol, gk_vol |
+| momentum | rsi, macd, stoch, cci, williams_r, roc, trix, adx, aroon, vortex, kst, tsi, fisher |
+| volume | obv, cmf, mfi, force_index, eom, pvt, kvo, vwap_proxy |
+| candle | body_ratio, upper_wick, lower_wick, engulfing, breakout_flag |
+| regime | hurst, entropy, autocorr, skew, kurtosis, drawdown |</p>
+<hr/>
+<h3 id="44-datascientist">4.4 DataScientist</h3>
+<p><strong>File:</strong> <code>src/modules/data_science/data_science.py</code></p>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">DataScientist</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Main ML training and evaluation class."""</span>
+
+    <span class="n">VALID_CLASSIFIERS</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'dnn'</span><span class="p">,</span> <span class="s1">'svc'</span><span class="p">,</span> <span class="s1">'random_forest'</span><span class="p">]</span>
+    <span class="n">VALID_REGRESSORS</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'lstm'</span><span class="p">,</span> <span class="s1">'xlstm'</span><span class="p">,</span> <span class="s1">'dnn'</span><span class="p">,</span> <span class="s1">'krr'</span><span class="p">,</span> <span class="s1">'linear'</span><span class="p">,</span> 
+                        <span class="s1">'lightgbm'</span><span class="p">,</span> <span class="s1">'tcn'</span><span class="p">,</span> <span class="s1">'nbeats'</span><span class="p">,</span> <span class="s1">'moe'</span><span class="p">,</span> <span class="s1">'multitask'</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">train_and_evaluate</span><span class="p">(</span><span class="n">ticker</span><span class="p">,</span> <span class="n">holdout_days</span><span class="p">,</span> <span class="n">llm_config</span><span class="p">,</span> <span class="n">generate_reports</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span>
+
+    <span class="c1"># Classifier training</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">train_classifier_dnn</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">train_classifier_svc</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">train_classifier_random_forest</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span><span class="p">)</span>
+
+    <span class="c1"># Regressor training</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">train_regressor_dnn</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">train_multioutput_lstm</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">train_multioutput_xlstm</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">train_regressor_krr</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">train_regressor_linear</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">train_lightgbm_multioutput</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">train_tcn</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">train_nbeats</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">train_moe</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">train_multitask</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span><span class="p">,</span> <span class="n">y_trend</span><span class="p">)</span>
+</code></pre></div>
+<p><strong>train_and_evaluate Steps:</strong>
+1. Split data (training vs holdout)
+2. Build multi-step targets
+3. Apply target transform (price/pct_change/log_return)
+4. Apply outlier filtering (training only)
+5. Apply data augmentation (training only)
+6. Apply feature processing (PCA/Autoencoder)
+7. Train classifiers &amp; regressors
+8. Evaluate on holdout
+9. Generate future forecasts
+10. Create HTML reports</p>
+<hr/>
+<h3 id="45-model-zoo">4.5 Model Zoo</h3>
+<p><strong>File:</strong> <code>src/modules/data_science/model_zoo.py</code></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Available models (all PyTorch)</span>
+<span class="n">MODEL_REGISTRY</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">'linear'</span><span class="p">:</span> <span class="n">LinearRegressor</span><span class="p">,</span>
+    <span class="s1">'dnn'</span><span class="p">:</span> <span class="n">DNNRegressor</span><span class="p">,</span>        <span class="c1"># ResNet + SE-Attention + Multi-Head</span>
+    <span class="s1">'lstm'</span><span class="p">:</span> <span class="n">LSTMRegressor</span><span class="p">,</span>      <span class="c1"># Bidirectional + Multi-Head Attention</span>
+    <span class="s1">'xlstm'</span><span class="p">:</span> <span class="n">xLSTMRegressorUnified</span><span class="p">,</span>  <span class="c1"># Extended LSTM with Matrix Memory</span>
+    <span class="s1">'tcn'</span><span class="p">:</span> <span class="n">TCN</span><span class="p">,</span>                 <span class="c1"># Temporal Convolutional Network</span>
+    <span class="s1">'nbeats'</span><span class="p">:</span> <span class="n">NBeatsLite</span><span class="p">,</span>       <span class="c1"># Interpretable forecast</span>
+<span class="p">}</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">LightGBMMultiOutput</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""LightGBM wrapper - trains one model per forecast step."""</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MixtureOfExperts</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Extensible MoE with regime-aware gating.</span>
+<span class="sd">    Supports ANY model architecture as experts.</span>
+<span class="sd">    """</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MultiTaskModel</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Joint regression + classification head."""</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">create_model</span><span class="p">(</span><span class="n">model_type</span><span class="p">,</span> <span class="n">input_dim</span><span class="p">,</span> <span class="n">output_dim</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span>
+<span class="w">    </span><span class="sd">"""Factory function to create models by name."""</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">train_pytorch_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">X_val</span><span class="p">,</span> <span class="n">y_val</span><span class="p">,</span> 
+                        <span class="n">epochs</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">lr</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span>
+<span class="w">    </span><span class="sd">"""Generic training loop with early stopping. Logs every epoch."""</span>
+</code></pre></div>
+<hr/>
+<h3 id="46-data-augmentation">4.6 Data Augmentation</h3>
+<p><strong>File:</strong> <code>src/modules/data_science/data_augmentor.py</code></p>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">DataAugmentor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Training data augmentation for time series."""</span>
+
+    <span class="c1"># Basic methods</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">jitter</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">std</span><span class="p">)</span>           <span class="c1"># Gaussian noise</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">scale</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="nb">range</span><span class="p">)</span>          <span class="c1"># Magnitude scaling</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">window_crop</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">ratio</span><span class="p">)</span>    <span class="c1"># Subsequences</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mixup</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">alpha</span><span class="p">)</span>          <span class="c1"># Sample interpolation</span>
+
+    <span class="c1"># Advanced methods (financial)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">volatility_regime</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span><span class="p">)</span>  <span class="c1"># GARCH-like clustering</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">block_bootstrap</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">block_size</span><span class="p">)</span>     <span class="c1"># Preserve autocorrelation</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">frequency_mask</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">ratio</span><span class="p">,</span> <span class="n">band</span><span class="p">)</span>     <span class="c1"># FFT masking</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">pattern_morph</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">n_neighbors</span><span class="p">)</span>      <span class="c1"># DTW interpolation</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">tail_augment</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">percentile</span><span class="p">)</span>        <span class="c1"># Extreme event amplification</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">augment</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">methods</span><span class="p">,</span> <span class="n">n_augmentations</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">X_aug</span><span class="p">,</span> <span class="n">y_aug</span><span class="p">]</span>
+</code></pre></div>
+<p><strong>Presets:</strong>
+- <code>minimal</code>: jitter + scale
+- <code>standard</code>: jitter, scale, magnitude_warp, pattern_morph
+- <code>financial</code>: volatility_regime, block_bootstrap, jitter (recommended for crypto)
+- <code>volatility</code>: volatility_regime, regime_noise
+- <code>tail_risk</code>: tail_augment, volatility_regime</p>
+<hr/>
+<h3 id="47-forecast-utilities">4.7 Forecast Utilities</h3>
+<p><strong>File:</strong> <code>src/modules/data_science/forecast_utils.py</code></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Target construction</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_multistep_targets</span><span class="p">(</span><span class="n">close_series</span><span class="p">,</span> <span class="n">horizon</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>
+
+<span class="c1"># Evaluation</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">evaluate_multistep</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">last_known_prices</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span>
+
+<span class="c1"># Baselines</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_multistep_baselines</span><span class="p">(</span><span class="n">train_close</span><span class="p">,</span> <span class="n">holdout_close</span><span class="p">,</span> <span class="n">horizon</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span>
+    <span class="c1"># Returns: naive, drift, rolling_mean baselines</span>
+
+<span class="c1"># Target transforms</span>
+<span class="n">VALID_TARGET_TRANSFORMS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"price"</span><span class="p">,</span> <span class="s2">"pct_change"</span><span class="p">,</span> <span class="s2">"log_return"</span><span class="p">]</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">to_target</span><span class="p">(</span><span class="n">prices</span><span class="p">,</span> <span class="n">transform</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">from_target</span><span class="p">(</span><span class="n">targets</span><span class="p">,</span> <span class="n">base_prices</span><span class="p">,</span> <span class="n">transform</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">from_target_cumulative</span><span class="p">(</span><span class="n">returns</span><span class="p">,</span> <span class="n">base_price</span><span class="p">,</span> <span class="n">transform</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+</code></pre></div>
+<hr/>
+<h2 id="5-data-flow-diagram">5. Data Flow Diagram</h2>
+<div class="highlight"><pre><span></span><code>configuration.yml
+       │
+       ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  launcher.py::run_pipeline(config)                                          │
+└─────────────────────────────────────────────────────────────────────────────┘
+       │
+       │ Step 1: Data Loading
+       ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  DataLoader(config['data_loader'])                                          │
+│  ├── download_data(ticker) via yfinance (60s timeout)                      │
+│  ├── download_extended(ticker) for chunked downloads                       │
+│  └── assemble_data() → data_dict = {ticker: DataFrame}                     │
+│      get_combined_data() → combined_df (all tickers)                        │
+└─────────────────────────────────────────────────────────────────────────────┘
+       │
+       │ combined_df [Datetime, Open, High, Low, Close, Volume, Ticker]
+       ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  FeatureEngineering(combined_df, config['feature_engineering'])             │
+│  ├── create_indicator_features() via IndicatorEngine                       │
+│  │   └── .shift(1) applied to ALL indicator columns                        │
+│  ├── create_lag_features() → Close_lag_1, Close_lag_5, ...                  │
+│  ├── create_rolling_features() → Close_rolling_20_mean, ...                 │
+│  ├── prune_features() → Remove constant, NaN, correlated features          │
+│  ├── filter_by_scale() (if allow_absolute_scale_features: false)            │
+│  ├── apply_pca() → PC_1, PC_2, ... (if enabled)                             │
+│  └── apply_autoencoder() → Latent_1, Latent_2, ... (if enabled)             │
+└─────────────────────────────────────────────────────────────────────────────┘
+       │
+       │ transformed_df [Close, feature_1, feature_2, ..., feature_N]
+       │
+       │ launcher.py adds target columns:
+       │   target_Close_t+1, ..., target_Close_t+{horizon}
+       │   target_trend (UP=2, SIDEWAYS=1, DOWN=0)
+       ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  DataScientist(transformed_df, config['data_science'])                      │
+│  └── train_and_evaluate(ticker, holdout_days, llm_config)                   │
+└─────────────────────────────────────────────────────────────────────────────┘
+       │
+       │ Inside train_and_evaluate():
+       ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  1. SPLIT DATA                                                              │
+│     train_data = data[:-holdout_days]                                       │
+│     holdout_data = data[-holdout_days:]                                     │
+│                                                                             │
+│  2. BUILD MULTI-STEP TARGETS                                                │
+│     y_multistep = build_multistep_targets(close, horizon)                   │
+│     Shape: (N - horizon, horizon)                                           │
+│                                                                             │
+│  3. APPLY TARGET TRANSFORM                                                  │
+│     if target_transform == "log_return":                                    │
+│         y_train = log(y / base_price) for each step                         │
+│                                                                             │
+│  4. APPLY OUTLIER FILTERING (training only)                                 │
+│     Remove top/bottom percentile of extreme target values                   │
+│                                                                             │
+│  5. APPLY DATA AUGMENTATION (training only)                                 │
+│     DataAugmentor.augment() with configured methods                         │
+│     Typical 4x data increase with "financial" preset                        │
+│                                                                             │
+│  6. APPLY FEATURE PROCESSING (fit on train only)                            │
+│     FeatureProcessor: StandardScaler + PCA + Autoencoder                    │
+│                                                                             │
+│  7. TRAIN CLASSIFIERS                                                       │
+│     for model in classifier_models: train_classifier_{model}()              │
+│                                                                             │
+│  8. TRAIN REGRESSORS                                                        │
+│     for model in regressor_models: train_{model}()                          │
+│     Verbose logging: every epoch shows Train/Val loss                       │
+│                                                                             │
+│  9. HOLDOUT EVALUATION                                                      │
+│     predictions = model.predict(X_holdout)                                  │
+│     metrics = evaluate_multistep(y_holdout, predictions)                    │
+│     Compare against naive, drift, rolling_mean baselines                    │
+│                                                                             │
+│  10. FUTURE FORECASTS                                                       │
+│      X_future = last_known_features                                         │
+│      future_pred = model.predict(X_future)                                  │
+│                                                                             │
+│  11. GENERATE REPORTS                                                       │
+│      ReportGenerator.generate_comprehensive_report()                        │
+└─────────────────────────────────────────────────────────────────────────────┘
+       │
+       │ benchmark_results dict + HTML report
+       ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  OUTPUT FILES (out/models_YYYYMMDD_HHMMSS/)                                 │
+│  ├── benchmark_results.json        # All metrics &amp; predictions             │
+│  ├── benchmark_report_advanced.html # Comprehensive report with all plots  │
+│  ├── training_data/                                                         │
+│  │   ├── classifier_training_data.csv                                      │
+│  │   └── regressor_training_data.csv                                        │
+│  ├── {model}_reg.pt                # Saved PyTorch models                  │
+│  └── {model}_regressor.pkl         # Saved sklearn models                  │
+└─────────────────────────────────────────────────────────────────────────────┘
+</code></pre></div>
+<hr/>
+<h2 id="6-leakage-prevention-guarantees">6. Leakage Prevention Guarantees</h2>
+<table>
+<thead>
+<tr>
+<th>Stage</th>
+<th>Mechanism</th>
+<th>Code Location</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Indicators</td>
+<td>All outputs shifted by 1 period</td>
+<td><code>IndicatorEngine.compute_indicators()</code></td>
+</tr>
+<tr>
+<td>Lag Features</td>
+<td>Explicit <code>df.shift(lag)</code></td>
+<td><code>FeatureEngineering.create_lag_features()</code></td>
+</tr>
+<tr>
+<td>Scaler</td>
+<td>Fit ONLY on training data</td>
+<td><code>FeatureProcessor.fit()</code></td>
+</tr>
+<tr>
+<td>PCA/AE</td>
+<td>Fit ONLY on training data</td>
+<td><code>FeatureProcessor.fit()</code></td>
+</tr>
+<tr>
+<td>Holdout</td>
+<td>Completely excluded from training</td>
+<td><code>train_and_evaluate()</code> split logic</td>
+</tr>
+<tr>
+<td>Augmentation</td>
+<td>Applied ONLY to training data</td>
+<td><code>DataAugmentor.augment()</code></td>
+</tr>
+<tr>
+<td>Outlier Filter</td>
+<td>Applied ONLY to training data</td>
+<td><code>DataScientist._filter_outliers()</code></td>
+</tr>
+<tr>
+<td>Target</td>
+<td>Built from FUTURE prices only</td>
+<td><code>build_multistep_targets()</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Validation:</strong> <code>leakage_guard.fail_on_unshifted_columns: true</code> enforces validation.</p>
+<hr/>
+<h2 id="7-model-hyperparameters-reference">7. Model Hyperparameters Reference</h2>
+<h3 id="classifiers">Classifiers</h3>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Key Parameters</th>
+<th>Config Path</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DNN</td>
+<td>layers, dropout, activation, epochs</td>
+<td><code>model_hyperparameters.classifier_dnn</code></td>
+</tr>
+<tr>
+<td>SVC</td>
+<td>C, gamma, kernel (GridSearch)</td>
+<td><code>model_hyperparameters.classifier_svc</code></td>
+</tr>
+<tr>
+<td>Random Forest</td>
+<td>n_estimators, max_depth</td>
+<td><code>model_hyperparameters.classifier_random_forest</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="regressors-core">Regressors (Core)</h3>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Key Parameters</th>
+<th>Config Path</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DNN</td>
+<td>layers, dropout, use_residual, use_se_attention</td>
+<td><code>model_hyperparameters.regressor_dnn</code></td>
+</tr>
+<tr>
+<td>LSTM</td>
+<td>timesteps, lstm_units, attention, bidirectional</td>
+<td><code>model_hyperparameters.regressor_lstm</code></td>
+</tr>
+<tr>
+<td>xLSTM</td>
+<td>timesteps, num_blocks, num_heads, dropout</td>
+<td><code>model_hyperparameters.regressor_xlstm</code></td>
+</tr>
+<tr>
+<td>KRR</td>
+<td>alpha, gamma, kernel</td>
+<td><code>model_hyperparameters.regressor_krr</code></td>
+</tr>
+<tr>
+<td>Linear</td>
+<td>fit_intercept, elasticnet</td>
+<td><code>model_hyperparameters.regressor_linear</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="model-zoo-advanced">Model Zoo (Advanced)</h3>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Key Parameters</th>
+<th>Config Path</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LightGBM</td>
+<td>num_leaves, learning_rate, n_estimators</td>
+<td><code>model_zoo.lightgbm.params</code></td>
+</tr>
+<tr>
+<td>TCN</td>
+<td>num_channels, kernel_size, dropout, epochs</td>
+<td><code>model_zoo.tcn.params</code></td>
+</tr>
+<tr>
+<td>N-BEATS</td>
+<td>num_blocks, hidden_dim, epochs</td>
+<td><code>model_zoo.nbeats.params</code></td>
+</tr>
+<tr>
+<td>MoE</td>
+<td>expert_types, gating_hidden_dim</td>
+<td><code>model_zoo.moe.params</code></td>
+</tr>
+<tr>
+<td>MultiTask</td>
+<td>num_classes</td>
+<td><code>model_zoo.multitask.params</code></td>
+</tr>
+</tbody>
+</table>
+<hr/>
+<h2 id="8-target-transforms">8. Target Transforms</h2>
+<table>
+<thead>
+<tr>
+<th>Transform</th>
+<th>Formula (per step)</th>
+<th>Inverse</th>
+<th>Use Case</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>price</code></td>
+<td><code>y = Close_{t+k}</code></td>
+<td>Identity</td>
+<td>Direct price prediction</td>
+</tr>
+<tr>
+<td><code>pct_change</code></td>
+<td><code>y = (Close_{t+k} - Close_t) / Close_t</code></td>
+<td><code>pred × base + base</code></td>
+<td>Stocks</td>
+</tr>
+<tr>
+<td><code>log_return</code></td>
+<td><code>y = log(Close_{t+k} / Close_t)</code></td>
+<td><code>base × exp(pred)</code></td>
+<td>Crypto (recommended)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Note:</strong> <code>log_return</code> is more numerically stable and treats up/down moves symmetrically.</p>
+<hr/>
+<h2 id="9-data-augmentation-methods">9. Data Augmentation Methods</h2>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Description</th>
+<th>Best For</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>jitter</td>
+<td>Gaussian noise injection</td>
+<td>General</td>
+</tr>
+<tr>
+<td>scale</td>
+<td>Random magnitude scaling</td>
+<td>Volatility robustness</td>
+</tr>
+<tr>
+<td>volatility_regime</td>
+<td>GARCH-like clustering</td>
+<td>Financial data</td>
+</tr>
+<tr>
+<td>block_bootstrap</td>
+<td>Block resampling</td>
+<td>Preserving autocorrelation</td>
+</tr>
+<tr>
+<td>frequency_mask</td>
+<td>FFT band masking</td>
+<td>Removing noise</td>
+</tr>
+<tr>
+<td>pattern_morph</td>
+<td>DTW interpolation</td>
+<td>Pattern diversity</td>
+</tr>
+<tr>
+<td>tail_augment</td>
+<td>Extreme event amplification</td>
+<td>Tail risk</td>
+</tr>
+</tbody>
+</table>
+<hr/>
+<h2 id="10-quick-reference-key-config-paths">10. Quick Reference: Key Config Paths</h2>
+<table>
+<thead>
+<tr>
+<th>Purpose</th>
+<th>Config Path</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Tickers to download</td>
+<td><code>data_loader.keys</code></td>
+</tr>
+<tr>
+<td>Candle interval</td>
+<td><code>data_loader.candle_length</code></td>
+</tr>
+<tr>
+<td>Extended download</td>
+<td><code>data_loader.extended_download</code></td>
+</tr>
+<tr>
+<td>Scale-free mode</td>
+<td><code>feature_engineering.allow_absolute_scale_features</code></td>
+</tr>
+<tr>
+<td>Indicators</td>
+<td><code>feature_engineering.indicators.enabled_groups</code></td>
+</tr>
+<tr>
+<td>Models to train</td>
+<td><code>data_science.regressor_models</code></td>
+</tr>
+<tr>
+<td>Forecast steps</td>
+<td><code>data_science.forecast_horizon</code></td>
+</tr>
+<tr>
+<td>Holdout size</td>
+<td><code>data_science.holdout_days</code></td>
+</tr>
+<tr>
+<td>Target transform</td>
+<td><code>data_science.target_transform</code></td>
+</tr>
+<tr>
+<td>Outlier filter</td>
+<td><code>data_science.outlier_filter</code></td>
+</tr>
+<tr>
+<td>Augmentation</td>
+<td><code>data_science.data_augmentation</code></td>
+</tr>
+<tr>
+<td>GPU usage</td>
+<td><code>data_science.use_gpu</code></td>
+</tr>
+</tbody>
+</table>
+<hr/>
+<h2 id="11-running-the-pipeline">11. Running the Pipeline</h2>
+<div class="highlight"><pre><span></span><code><span class="c1"># Interactive mode</span>
+python<span class="w"> </span>launcher.py
+<span class="c1"># Select "Use configuration.yml" or "Create config_auto.yml interactively"</span>
+
+<span class="c1"># Outputs</span>
+out/
+├──<span class="w"> </span>raw_data/BTC.csv
+├──<span class="w"> </span>transformed_features/features_labels.csv
+├──<span class="w"> </span>models_20260108_120000/
+│<span class="w">   </span>├──<span class="w"> </span>benchmark_report_advanced.html<span class="w">  </span>←<span class="w"> </span>Main<span class="w"> </span>report
+│<span class="w">   </span>├──<span class="w"> </span>benchmark_results.json
+│<span class="w">   </span>├──<span class="w"> </span>training_data/
+│<span class="w">   </span>│<span class="w">   </span>├──<span class="w"> </span>classifier_training_data.csv
+│<span class="w">   </span>│<span class="w">   </span>└──<span class="w"> </span>regressor_training_data.csv
+│<span class="w">   </span>└──<span class="w"> </span>*.pt<span class="w"> </span><span class="o">(</span>saved<span class="w"> </span>PyTorch<span class="w"> </span>models<span class="o">)</span>
+└──<span class="w"> </span>summaries/
+<span class="w">    </span>├──<span class="w"> </span>data_summary.csv
+<span class="w">    </span>└──<span class="w"> </span>features_summary.json
+</code></pre></div>
+<hr/>
+<h2 id="12-testing">12. Testing</h2>
+<div class="highlight"><pre><span></span><code><span class="c1"># All tests</span>
+pytest<span class="w"> </span>tests/<span class="w"> </span>-v
+
+<span class="c1"># Specific test files</span>
+pytest<span class="w"> </span>tests/test_reporting_robustness.py<span class="w"> </span>-v
+pytest<span class="w"> </span>tests/test_config.py<span class="w"> </span>-v
+pytest<span class="w"> </span>tests/test_features.py<span class="w"> </span>-v
+pytest<span class="w"> </span>tests/test_leakage.py<span class="w"> </span>-v
+pytest<span class="w"> </span>tests/test_pruning.py<span class="w"> </span>-v
+pytest<span class="w"> </span>tests/test_target_transforms.py<span class="w"> </span>-v
+</code></pre></div>
+<hr/>
+<h2 id="13-regenerating-this-documentation">13. Regenerating This Documentation</h2>
+<div class="highlight"><pre><span></span><code><span class="c1"># Convert Markdown to HTML</span>
+python<span class="w"> </span>doc/generator_fromMD_FILE.py<span class="w"> </span>doc/DOCS_SYSTEM_ARCHITECTURE.md<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-o<span class="w"> </span>doc/trading_forecast_v2.html<span class="w"> </span>--title<span class="w"> </span><span class="s2">"Trading Forecast v2"</span>
+</code></pre></div>
+      </main>
+    </div>
+
+    <div class="footer">
+      Generated from Markdown • Trading Forecast v2
+    </div>
+  </div>
+
+  <script>
+(function() {
+  // Smooth scrolling for TOC anchors
+  document.querySelectorAll('.toc a[href^="#"]').forEach(a => {
+    a.addEventListener('click', (e) => {
+      const id = a.getAttribute('href').slice(1);
+      const el = document.getElementById(id);
+      if (!el) return;
+      e.preventDefault();
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      history.pushState(null, '', '#' + id);
+    });
+  });
+})();
+</script>
+  
+</body>
+</html>
